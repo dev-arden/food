@@ -1,34 +1,47 @@
 import React, {useState}from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, ScrollView} from 'react-native';
 import SearchBar from '../components/SearchBar';
-import yelp from '../api/yelp';
+import useResults from '../hooks/useResults';
+import ResultsList from '../components/ResultsList';
 
-const SearchScreen = () => {
+const SearchScreen = ({navigation}) => {
   const [term, setTerm] = useState('');
-  const [results, setResults] = useState([]);
-  //results == businesses, restaurants 
-
-  const searchApi = async() => {
-    const response = await yelp.get('/search', {
-      params: {
-        limit: 50,
-        term,
-        location: 'san jose'
-        //세컨드 알규멘트인 params를 넣음으로써 '/search?limit=50'이렇게 됨
-      }
+  const [searchApi, results, errorMessage] = useResults();
+  
+  //console.log(results);
+  const filterResultsByPrice = (price) => {
+    //price === '$' || '$$' || '$$$'
+    return results.filter(result =>{
+      return result.price === price;
     });
-    setResults(response.data.businesses);
   };
 
   return(
-    <View>
+    <>
       <SearchBar 
         term={term} 
         onTermChange = {setTerm}
-        onTermSubmit={searchApi}
+        onTermSubmit={() => searchApi(term)}
       />
-      <Text>We have found {results.length} results</Text>
-    </View>
+      {errorMessage ? <Text>{errorMessage}</Text> : null}
+      <ScrollView>
+        <ResultsList 
+          results ={filterResultsByPrice('$')} 
+          title="Cost Effective"
+          navigation={navigation} 
+        />
+        <ResultsList 
+          results={filterResultsByPrice('$$')} 
+          title="Bit Pricier" 
+          navigation={navigation} 
+        />
+        <ResultsList 
+          results={filterResultsByPrice('$$$')} 
+          title="Big Spender"
+          navigation={navigation}  
+        />
+      </ScrollView>
+    </>
   )
 };
 
